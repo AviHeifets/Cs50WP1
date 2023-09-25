@@ -1,0 +1,11 @@
+{% load markdownify %}y
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{% block TITLE %}{% endblock %}</title>
+    </head>
+    <body>
+        {{ entry|markdownify }}
+    </body>
+</html>

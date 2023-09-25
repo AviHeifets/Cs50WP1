@@ -9,13 +9,14 @@ def index(request):
     })
 
 
-def show_entry(request, TITLE):
-    found_entry = util.get_entry(TITLE)
+def show_entry(request, title):
+    found_entry = util.get_entry(title)
     if found_entry is None:
         return render(request, "encyclopedia/error_not_found.html", {
-            "TITLE": TITLE.upper()
+            "TITLE": title.upper()
         })
 
-    return render(request, "encyclopedia/error_not_found.html", {
-        "TITLE": TITLE
+    return render(request, "encyclopedia/entry_page.html", {
+        "TITLE": title,
+        "entry": found_entry
     })
