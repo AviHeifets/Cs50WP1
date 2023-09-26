@@ -13,6 +13,18 @@ class SearchForm(forms.Form):
     )
 
 
+class NewEntryForm(forms.Form):
+    name = forms.CharField(
+        label='name',
+        max_length=255,
+        widget=forms.TextInput(attrs={'placeholder': 'name'}),
+    )
+    data = forms.CharField(
+        label='Entry',
+        widget=forms.Textarea(attrs={'placeholder': 'Data'})
+    )
+
+
 def index(request):
     if request.method == "POST":
         form = SearchForm(request.POST)
@@ -21,26 +33,62 @@ def index(request):
         if not form.is_valid():
             return render(request, "encyclopedia/index.html", {
                 "entries": util.list_entries(),
-                "form": form
+                "form": form,
+                "header": "All Pages"
             })
 
-        if form.cleaned_data['q'] in entries:
-            return HttpResponseRedirect(f"wiki/{form.cleaned_data['q']}")
+        cleaned = form.cleaned_data['q'].upper()
+
+        if cleaned in entries:
+            return HttpResponseRedirect(f"wiki/{cleaned}")
+
+        # find all results that are substrings
+        substrings = filter(lambda x: (cleaned in x), entries)
+        return render(request, "encyclopedia/index.html", {
+            "entries": substrings,
+            "form": form,
+            "header": "Similar Results"
+        })
 
     return render(request, "encyclopedia/index.html", {
         "entries": util.list_entries(),
-        "form": SearchForm()
+        "form": SearchForm(),
+        "header": "All Pages"
     })
 
 
 def show_entry(request, title):
     found_entry = util.get_entry(title)
     if found_entry is None:
-        return render(request, "encyclopedia/error_not_found.html", {
-            "TITLE": title.upper()
+        return render(request, "encyclopedia/error.html", {
+            "TITLE": title.upper(),
+            "massage": "Not found!"
         })
 
     return render(request, "encyclopedia/entry_page.html", {
         "TITLE": title,
         "entry": found_entry
+    })
+
+
+def new_entry(request):
+    if request.method == "POST":
+        form = NewEntryForm(request.POST)
+
+        if not form.is_valid():
+            return render(request, "encyclopedia/new_entry.html", {
+                'form': NewEntryForm()
+            })
+
+        if form.cleaned_data['name'].upper() in util.list_entries():
+            return render(request, "encyclopedia/error.html", {
+                "TITLE": '',
+                "massage": "Entry already exists!"
+            })
+
+        util.save_entry(form.cleaned_data['name'].upper(), form.cleaned_data['data'])
+        return HttpResponseRedirect(f"wiki/{form.cleaned_data['name'].upper()}")
+
+    return render(request, "encyclopedia/new_entry.html", {
+        'form': NewEntryForm()
     })
