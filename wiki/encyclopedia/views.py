@@ -3,6 +3,7 @@ from django import forms
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from . import util
+import random
 
 
 class SearchForm(forms.Form):
@@ -23,6 +24,7 @@ class NewEntryForm(forms.Form):
         label='Entry',
         widget=forms.Textarea(attrs={'placeholder': 'Data'})
     )
+
 
 class EditForm(forms.Form):
     data = forms.CharField(
@@ -123,3 +125,11 @@ def edit_entry(request, title):
         'form': form,
         'title': title
     })
+
+
+def random_page(request):
+    entries = util.list_entries()
+    title = random.randint(0, len(entries) - 1)
+
+    return HttpResponseRedirect(reverse("encyclopedia:show_entry", args=[entries[title]]))
+
