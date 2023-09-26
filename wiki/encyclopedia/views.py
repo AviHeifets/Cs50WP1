@@ -24,6 +24,12 @@ class NewEntryForm(forms.Form):
         widget=forms.Textarea(attrs={'placeholder': 'Data'})
     )
 
+class EditForm(forms.Form):
+    data = forms.CharField(
+        label='Entry',
+        widget=forms.Textarea(attrs={'placeholder': 'Data'})
+    )
+
 
 def index(request):
     if request.method == "POST":
@@ -59,6 +65,7 @@ def index(request):
 
 def show_entry(request, title):
     found_entry = util.get_entry(title)
+
     if found_entry is None:
         return render(request, "encyclopedia/error.html", {
             "TITLE": title.upper(),
@@ -66,7 +73,7 @@ def show_entry(request, title):
         })
 
     return render(request, "encyclopedia/entry_page.html", {
-        "TITLE": title,
+        "title": title,
         "entry": found_entry
     })
 
@@ -91,4 +98,28 @@ def new_entry(request):
 
     return render(request, "encyclopedia/new_entry.html", {
         'form': NewEntryForm()
+    })
+
+
+def edit_entry(request, title):
+    data = util.get_entry(title)
+    form = EditForm(initial={'data': data})
+    title = title
+
+    if request.method == "POST":
+        form = EditForm(request.POST)
+
+        if not form.is_valid():
+            form = EditForm(initial={'data': data})
+            return render(request, "encyclopedia/new_entry.html", {
+                'form': form,
+                'title': title
+            })
+
+        util.save_entry(title, form.cleaned_data['data'])
+        return HttpResponseRedirect(reverse("encyclopedia:show_entry", args=[title]))
+
+    return render(request, "encyclopedia/edit_entry.html", {
+        'form': form,
+        'title': title
     })
